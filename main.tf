@@ -10,7 +10,7 @@ provider "vault" {
 }
 
 module "iam_user" {
-  source = "../modules/iam-user"
+  source = "modules/iam-user"
 
   user_name       = var.user_name
   policy_name     = var.policy_name
@@ -19,7 +19,7 @@ module "iam_user" {
 }
 
 module "vault_enable" {
-  source     = "../modules/vault-enable"
+  source     = "modules/vault-enable"
   depends_on = [module.iam_user]
 
   access_key_id     = module.iam_user.access_key_id
@@ -32,7 +32,7 @@ module "vault_enable" {
 }
 
 module "static_iam_user" {
-  source = "../modules/iam-user"
+  source = "modules/iam-user"
 
   user_name       = var.static_iam_user
   policy_name     = var.policy_name1
@@ -41,7 +41,7 @@ module "static_iam_user" {
 }
 
 module "iam_vault_static_role" {
-  source     = "../modules/vault-static-role"
+  source     = "modules/vault-static-role"
   depends_on = [module.iam_user]
 
   static_iam_user       = var.static_iam_user
@@ -52,7 +52,7 @@ module "iam_vault_static_role" {
 
 
 module "dynamic_role" {
-  source             = "../modules/vault-dynamic-role"
+  source             = "modules/vault-dynamic-role"
   depends_on         = [module.iam_user]
   vault_backend_path = module.vault_enable.vault_backend_path
   role_name          = "dev-dynamic-role"
