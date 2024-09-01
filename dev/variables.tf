@@ -11,11 +11,13 @@ variable "user_name" {
 variable "policy_name" {
   description = "The name of the IAM policy"
   type        = string
+  default     = "vault-user-policy"
 }
 
 variable "policy_name1" {
   description = "The name of the IAM policy"
   type        = string
+  default     = "iam-user-policy"
 }
 
 
