@@ -1,5 +1,3 @@
----
-
 # Terraform IAM and Vault Integration
 
 This repository contains Terraform code to integrate AWS IAM user creation with HashiCorp Vault, including dynamic and static roles. It also provisions an HCP Vault Cluster and configures Vault for AWS credential management.
@@ -135,6 +133,4 @@ This module provisions and manages a HashiCorp Cloud Platform (HCP) Vault cluste
 - `vault_public_endpoint`: The public endpoint for accessing the HCP Vault cluster.
 - `vault_token_key`: The Vault token for accessing the HCP Vault cluster.
 - `vault_backend_path`: The path of the Vault backend where secrets are stored.
-
----
 
