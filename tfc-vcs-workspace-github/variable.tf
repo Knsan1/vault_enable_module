@@ -37,12 +37,14 @@ variable "workspaces" {
   }
 }
 
+# Tags List for Workspaces (default as an empty list, can be provided dynamically)
+variable "tag_names" {
+  description = "List of tags to apply to the workspaces"
+  type        = list(string)
+  default     = ["kns-hc", "test"] # Default to an empty list
+}
+
 variable "github_oauth_token" {
   description = "GitHub Client Token"
   type        = string
 }
-### Need to export TFC and Github Token as ENV variable
-## Github account Token(classic) Full Repo Access
-# $ export TF_VAR_github_oauth_token="ghpxxxxxxxxxxxxxx"
-## TFC Account Level Token
-# $ export TFE_TOKEN="xxxxxxxxxxxxxx"

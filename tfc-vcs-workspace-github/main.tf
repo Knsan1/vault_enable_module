@@ -34,6 +34,7 @@ resource "tfe_workspace" "workspace" {
   auto_apply_run_trigger = true
   file_triggers_enabled  = true
   working_directory      = each.value
+  tag_names              = var.tag_names
 
   vcs_repo {
     identifier     = var.repo_name                          # Use the variable for GitHub repo
