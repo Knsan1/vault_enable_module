@@ -4,6 +4,12 @@ variable "hvn_id" {
   # default     = "aws-hcp-vault-hvn"
 }
 
+variable "cidr_block" {
+  description = "CIDR block of HCP HVN."
+  type        = string
+  default     = "172.25.16.0/20"
+}
+
 variable "cluster_id" {
   description = "The ID of the HCP Vault cluster."
   type        = string
