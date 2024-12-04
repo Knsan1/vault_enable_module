@@ -143,7 +143,7 @@ nslookup kns-vault-cluster01-private-vault-7c6c4b2e.11f41fcd.z1.hashicorp.cloud
 ```bash
 export VAULT_ADDR="https://kns-vault-cluster01-private-vault-7c6c4b2e.11f41fcd.z1.hashicorp.cloud:8200"
 export VAULT_NAMESPACE="admin"
-export VAULT_TOKEN="xxxxxxxxxxxxxxxxx"
+export VAULT_TOKEN="xxxxxxxxx"
 ```
 
 ## Test Dynamic Role
