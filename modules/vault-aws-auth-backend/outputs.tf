@@ -10,3 +10,6 @@ output "vault_role_name" {
   value = vault_aws_auth_backend_role.aws_role.role_id
 }
 
+output "int_profile_name" {
+  value = var.instance_profile_name
+}

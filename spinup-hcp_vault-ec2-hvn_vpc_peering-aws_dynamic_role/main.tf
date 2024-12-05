@@ -46,14 +46,14 @@ data "aws_caller_identity" "current" {}
 
 ###Enable AWS Auth on Vault(With AWS Role)
 module "vault-aws-auth" {
-  source = "../modules/vault-aws-auth-backend"
+  source = "git::https://github.com/Knsan1/vault_enable_module.git//modules/vault-aws-auth-backend"
 
   user_name             = "vault-auth-admin"
   policy_name           = "vault-auth-policy"
   actions               = ["ec2:DescribeInstances", "iam:GetInstanceProfile", "iam:GetUser", "iam:ListRoles", "iam:GetRole"]
   ec2_role_name         = "AWS_EC2_role"
   instance_profile_name = "vault-client-instance-profile"
-  vault_policy_name     = "ec2-policy"
+  vault_policy_name     = "db-policy"
   vault_policy_document = <<EOT
 # Allow tokens to query themselves
 path "auth/token/lookup-self" {
@@ -87,7 +87,7 @@ path "kns-aws-master-account/*" {
 }
 EOT
 
-  vault_role_name = "ec2-role"
+  vault_role_name = "db-role"
   token_ttl       = 300
   token_max_ttl   = 600
 }
@@ -113,7 +113,7 @@ module "enable_vault_jwt_auth_backend" {
 
 ###Enable Approle Auth on Vault(Machine/App to Vault)
 module "enable_approle_auth_backend" {
-  source          = "../modules/vault-approle-auth-backend/"
+  source          = "git::https://github.com/Knsan1/vault_enable_module.git//modules/vault-approle-auth-backend/"
   policy_name     = "custom-aws-approle-policy"
   policy_document = <<EOT
 path "aws-master-account/*" {
@@ -153,8 +153,8 @@ data "aws_subnets" "private" {
 
 ## Create SG 2 EC2 and RDS resources
 module "aws_ec2_rds_instances" {
-  depends_on                 = [module.hvp_vault_cluster, module.vpc, module.hvn_peering]
-  source                     = "../modules/aws-ec2-rds"
+  depends_on                 = [module.hvp_vault_cluster, module.vpc, module.hvn_peering, module.vault-aws-auth]
+  source                     = "git::https://github.com/Knsan1/vault_enable_module.git//modules/aws-ec2-rds"
   vpc_id                     = module.vpc.vpc_id
   public_subnet_ids          = data.aws_subnets.public.ids
   private_subnet_ids         = data.aws_subnets.private.ids
@@ -165,41 +165,6 @@ module "aws_ec2_rds_instances" {
   instance_profile_id        = module.vault-aws-auth.int_profile_name
 }
 
-# ## Create SG EC2 under Public Subnet
-# module "sg_ec2_instance" {
-#   source        = "git::https://github.com/Knsan1/vault_enable_module.git///modules/aws-simple-ec2"
-#   region        = module.vpc.aws_region   # Using the same region from the VPC module
-#   ami           = "ami-01811d4912b4ccb26" # SG Region Ubuntu AMI ID
-#   instance_type = "t2.micro"
-#   key_name      = "sg-ec2-keypair" # Create keypair manually first
-#   vpc_id        = module.vpc.vpc_id
-#   subnet_id     = module.vpc.public_subnet_ids[0] # Replace with your subnet ID
-#   instance_name = "sg-ec2-public-instance"
-# }
-
-# ## Create SG EC2 under Private Subnet
-# module "sg_ec2_private_instance" {
-#   source        = "git::https://github.com/Knsan1/vault_enable_module.git///modules/aws-simple-ec2"
-#   region        = module.vpc.aws_region   # Using the same region from the VPC module
-#   ami           = "ami-01811d4912b4ccb26" # SG Region Ubuntu AMI ID
-#   instance_type = "t2.micro"
-#   key_name      = "sg-ec2-keypair" # Create keypair manually first
-#   vpc_id        = module.vpc.vpc_id
-#   subnet_id     = module.vpc.private_subnet_ids[0] # Replace with your subnet ID
-#   instance_name = "sg-ec2-private-instance"
-# }
-
-# ## Create SG EC2 under DB Subnet
-# module "sg_ec2_db_instance" {
-#   source        = "git::https://github.com/Knsan1/vault_enable_module.git///modules/aws-simple-ec2"
-#   region        = module.vpc.aws_region   # Using the same region from the VPC module
-#   ami           = "ami-01811d4912b4ccb26" # SG Region Ubuntu AMI ID
-#   instance_type = "t2.micro"
-#   key_name      = "sg-ec2-keypair" # Create keypair manually first
-#   vpc_id        = module.vpc.vpc_id
-#   subnet_id     = module.vpc.db_subnet_ids[0] # Replace with your subnet ID
-#   instance_name = "sg-ec2-db-instance"
-# }
 
 ## Create Vault Admin IAM user for configure at AWS Vault Secret Engine
 module "iam_user" {
@@ -248,10 +213,10 @@ module "vault_enable_aws" {
   access_key_id     = module.iam_user.access_key_id
   secret_access_key = module.iam_user.secret_access_key
   vault_path        = "kns-aws-master"
-  vault_token       = module.hvp_vault_cluster.vault_token_key
-  vault_address     = module.hvp_vault_cluster.vault_public_endpoint
-  min_ttl           = 120
-  max_ttl           = 240
+  # vault_token       = module.hvp_vault_cluster.vault_token_key
+  # vault_address     = module.hvp_vault_cluster.vault_public_endpoint
+  min_ttl = 120
+  max_ttl = 240
 }
 
 
@@ -275,38 +240,22 @@ module "aws_dynamic_role" {
 EOT
 }
 
-# resource "time_sleep" "wait_before_creating_db_role" {
-#   depends_on      = [module.aws_ec2_rds_instances]
-#   create_duration = "60s"
-# }
+resource "time_sleep" "wait_before_creating_db_role" {
+  depends_on      = [module.aws_ec2_rds_instances]
+  create_duration = "60s"
+}
 
-# ## Eanble DB Secret Engine on Vault Cluster
-# module "vault_db_secrets" {
-#   source     = "../modules/vault-db-dynamic-role"
-#   depends_on = [time_sleep.wait_before_creating_db_role]
+module "vault_database_secrets" {
+  source     = "git::https://github.com/Knsan1/vault_enable_module.git//modules/vault-db-dynamic-role"
+  depends_on = [time_sleep.wait_before_creating_db_role]
 
-#   vault_token    = module.hvp_vault_cluster.vault_token_key
-#   vault_address  = module.hvp_vault_cluster.vault_public_endpoint
-#   path           = "db"
-#   db_name        = "mysql"
-#   db_username    = "vault"
-#   db_password    = "vault"
-#   connection_url = "{{username}}:{{password}}@tcp(${module.aws_ec2_rds_instances.rds_hostname}:3306)/"
-#   allowed_roles  = ["*"]
-
-#   readwrite_role_name   = "readwrite-role"
-#   readwrite_default_ttl = 600
-#   readwrite_max_ttl     = 900
-#   readwrite_creation_statements = [
-#     "CREATE USER '{{name}}'@'%' IDENTIFIED BY '{{password}}';",
-#     "GRANT ALL PRIVILEGES ON projectdb.* TO '{{name}}'@'%';"
-#   ]
-
-#   readonly_role_name   = "readonly-role"
-#   readonly_default_ttl = 600
-#   readonly_max_ttl     = 900
-#   readonly_creation_statements = [
-#     "CREATE USER '{{name}}'@'%' IDENTIFIED BY '{{password}}';",
-#     "GRANT SELECT ON projectdb.* TO '{{name}}'@'%';"
-#   ]
-# }
+  # Add the port to the MySQL endpoint dynamically
+  conn_url       = module.aws_ec2_rds_instances.rds_endpoint
+  Secret_path    = "db"
+  config_name    = "mysqldb"
+  conn_username  = "vault"
+  conn_password  = "vault"
+  allowed_roles  = ["readonly-role", "readwrite-role"]
+  readonly_role  = "readonly-role"
+  readwrite_role = "readwrite-role"
+}

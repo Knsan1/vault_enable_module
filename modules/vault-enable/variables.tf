@@ -19,16 +19,6 @@ variable "vault_path" {
   default     = "master-admin"
 }
 
-variable "vault_address" {
-  description = "The address of the Vault server"
-  type        = string
-}
-
-variable "vault_token" {
-  description = "Token of Vault server"
-  type        = string
-}
-
 variable "min_ttl" {
   description = "Maximum time-to-live (TTL) in seconds"
   type        = number
@@ -40,3 +30,13 @@ variable "max_ttl" {
   type        = number
   default     = 3600  # Default to 1 hour if not provided
 }
+
+# variable "vault_address" {
+#   description = "The address of the Vault server"
+#   type        = string
+# }
+
+# variable "vault_token" {
+#   description = "Token of Vault server"
+#   type        = string
+# }

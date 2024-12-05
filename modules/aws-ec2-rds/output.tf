@@ -10,6 +10,12 @@ output "rds_username" {
   description = "RDS instance root username"
   value       = aws_db_instance.project_rds.username
 }
+
+output "rds_endpoint" {
+  description = "RDS URL to access"
+  value       = aws_db_instance.project_rds.endpoint
+}
+
 output "endpoints" {
   value = <<EOF
 AWS RDS Endpoint:  ${aws_db_instance.project_rds.endpoint}

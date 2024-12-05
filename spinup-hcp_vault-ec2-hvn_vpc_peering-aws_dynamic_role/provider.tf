@@ -6,5 +6,6 @@ provider "aws" {
 provider "vault" {
   address = module.hvp_vault_cluster.vault_public_endpoint
   token   = module.hvp_vault_cluster.vault_token_key
+  # namespace = admin
   # Vault provider configuration
 }
