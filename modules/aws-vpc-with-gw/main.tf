@@ -24,7 +24,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "public subnet-${element(data.aws_availability_zones.azs.names, count.index)}"
+    Name = "public subnet-${element(data.aws_availability_zones.azs.names, count.index % length(data.aws_availability_zones.azs.names))}-${count.index + 1}"
   }
 }
 
@@ -68,7 +68,7 @@ resource "aws_subnet" "private" {
   availability_zone       = data.aws_availability_zones.azs.names[count.index % length(data.aws_availability_zones.azs.names)]
 
   tags = {
-    Name = "private subnet-${element(data.aws_availability_zones.azs.names, count.index)}"
+    Name = "private subnet-${element(data.aws_availability_zones.azs.names, count.index % length(data.aws_availability_zones.azs.names))}-${count.index + 1}"
   }
 }
 
@@ -119,7 +119,7 @@ resource "aws_subnet" "db_subnet" {
   availability_zone       = data.aws_availability_zones.azs.names[count.index % length(data.aws_availability_zones.azs.names)]
 
   tags = {
-    Name = "db subnet-${element(data.aws_availability_zones.azs.names, count.index)}"
+    Name = "db subnet-${element(data.aws_availability_zones.azs.names, count.index % length(data.aws_availability_zones.azs.names))}-${count.index + 1}"
   }
 }
 

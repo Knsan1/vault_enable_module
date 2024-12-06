@@ -68,7 +68,7 @@ resource "vault_policy" "db_policy" {
 # Ensure IAM Role is Created First
 resource "time_sleep" "wait_before_creating_role" {
   depends_on      = [aws_iam_role.ec2_role]
-  create_duration = "60s"
+  create_duration = "120s"
 }
 
 # Vault AWS Auth Backend Role
