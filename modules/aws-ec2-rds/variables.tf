@@ -36,16 +36,6 @@ variable "instance_profile_id" {
   # default     = "replace your Vault Private Address"
 }
 
-variable "public_subnet_ids" {
-  description = "List of public subnet IDs"
-  type        = list(string)
-}
-
-variable "private_subnet_ids" {
-  description = "List of private subnet IDs"
-  type        = list(string)
-}
-
 # variable "public_subnet_ids" {
 #   description = "List of public subnet IDs"
 #   type        = list(string)
@@ -55,3 +45,13 @@ variable "private_subnet_ids" {
 #   description = "List of private subnet IDs"
 #   type        = list(string)
 # }
+
+variable "public_subnet_ids" {
+  description = "Map of public subnet IDs"
+  type        = map(string)
+}
+
+variable "private_subnet_ids" {
+  description = "Map of private subnet IDs"
+  type        = map(string)
+}

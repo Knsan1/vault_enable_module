@@ -15,15 +15,26 @@ variable "vpc_id" {
   type        = string
 }
 
+# variable "private_subnet_ids" {
+#   description = "The IDs of the private subnets"
+#   type        = list(string)
+# }
+
+# variable "db_subnet_ids" {
+#   description = "The IDs of the DB subnets"
+#   type        = list(string)
+# }
+
 variable "private_subnet_ids" {
-  description = "The IDs of the private subnets"
-  type        = list(string)
+  description = "Map of private subnet IDs"
+  type        = map(string)
 }
 
 variable "db_subnet_ids" {
-  description = "The IDs of the DB subnets"
-  type        = list(string)
+  description = "Map of database subnet IDs"
+  type        = map(string)
 }
+
 
 variable "private_route_table_id" {
   description = "The route table ID for the private subnets"
@@ -47,7 +58,7 @@ variable "db_cidrs" {
 
 variable "hvp_vault_cluster" {
   description = "Vault cluster information"
-  type        = object({
+  type = object({
     hvn_id         = string
     hvn_self_link  = string
     hvn_cidr_block = string

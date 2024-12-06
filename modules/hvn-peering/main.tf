@@ -3,7 +3,7 @@
 # HVN peering with the VPC
 resource "hcp_aws_network_peering" "hvn_to_vpc" {
   # depends_on      = [var.hvp_vault_cluster]
-  
+
   hvn_id          = var.hvp_vault_cluster.hvn_id
   peering_id      = "hvn-to-vpc-peer"
   peer_vpc_id     = var.vpc_id
@@ -17,23 +17,40 @@ resource "aws_vpc_peering_connection_accepter" "accept_hvn_to_vpc" {
   auto_accept               = true
 }
 
-# HVN Routes for Private Subnet
+# # HVN Routes for Private Subnet
+# resource "hcp_hvn_route" "hvn_to_private" {
+#   for_each         = toset(var.private_subnet_ids)
+#   hvn_link         = var.hvp_vault_cluster.hvn_self_link
+#   hvn_route_id     = each.value
+#   destination_cidr = var.private_cidrs[each.value]
+#   target_link      = hcp_aws_network_peering.hvn_to_vpc.self_link
+# }
+
+# # HVN Routes for DB Subnet
+# resource "hcp_hvn_route" "hvn_to_db" {
+#   for_each         = toset(var.db_subnet_ids)
+#   hvn_link         = var.hvp_vault_cluster.hvn_self_link
+#   hvn_route_id     = each.value
+#   destination_cidr = var.db_cidrs[each.value]
+#   target_link      = hcp_aws_network_peering.hvn_to_vpc.self_link
+# }
+
 resource "hcp_hvn_route" "hvn_to_private" {
-  for_each         = toset(var.private_subnet_ids)
+  for_each         = var.private_subnet_ids
   hvn_link         = var.hvp_vault_cluster.hvn_self_link
-  hvn_route_id     = each.value
-  destination_cidr = var.private_cidrs[each.value]
+  hvn_route_id     = each.key
+  destination_cidr = var.private_cidrs[each.key]
   target_link      = hcp_aws_network_peering.hvn_to_vpc.self_link
 }
 
-# HVN Routes for DB Subnet
 resource "hcp_hvn_route" "hvn_to_db" {
-  for_each         = toset(var.db_subnet_ids)
+  for_each         = var.db_subnet_ids
   hvn_link         = var.hvp_vault_cluster.hvn_self_link
-  hvn_route_id     = each.value
-  destination_cidr = var.db_cidrs[each.value]
+  hvn_route_id     = each.key
+  destination_cidr = var.db_cidrs[each.key]
   target_link      = hcp_aws_network_peering.hvn_to_vpc.self_link
 }
+
 
 # Private Subnet to HVN Route
 resource "aws_route" "private_to_hvn" {

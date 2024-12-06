@@ -21,15 +21,49 @@ module "hvp_vault_cluster" {
 }
 
 ## Peering between HVN and VPC
-module "hvn_peering" {
-  source     = "git::https://github.com/Knsan1/vault_enable_module.git//modules/hvn-peering" # Adjust the path to your module
-  depends_on = [module.hvp_vault_cluster, module.vpc]
+# module "hvn_peering" {
+#   # source     = "git::https://github.com/Knsan1/vault_enable_module.git//modules/hvn-peering" # Adjust the path to your module
+#   source     = "../modules/hvn-peering" # Adjust the path to your module
+#   depends_on = [module.hvp_vault_cluster, module.vpc]
 
-  aws_region             = module.vpc.aws_region
-  peer_account_id        = data.aws_caller_identity.current.account_id
-  vpc_id                 = module.vpc.vpc_id
-  private_subnet_ids     = module.vpc.private_subnet_ids
-  db_subnet_ids          = module.vpc.db_subnet_ids
+#   aws_region             = module.vpc.aws_region
+#   peer_account_id        = data.aws_caller_identity.current.account_id
+#   vpc_id                 = module.vpc.vpc_id
+#   private_subnet_ids     = module.vpc.private_subnet_ids
+#   db_subnet_ids          = module.vpc.db_subnet_ids
+#   private_route_table_id = module.vpc.private_route_table_id
+#   db_route_table_id      = module.vpc.db_route_table_id
+#   private_cidrs          = module.vpc.private_cidrs
+#   db_cidrs               = module.vpc.db_cidrs
+#   hvp_vault_cluster = {
+#     hvn_id         = module.hvp_vault_cluster.hvn_id
+#     hvn_self_link  = module.hvp_vault_cluster.hvn_self_link
+#     hvn_cidr_block = module.hvp_vault_cluster.hvn_cidr_block
+#   }
+# }
+
+module "hvn_peering" {
+  source          = "git::https://github.com/Knsan1/vault_enable_module.git//modules/hvn-peering"
+  depends_on      = [module.vpc]
+  aws_region      = module.vpc.aws_region
+  peer_account_id = data.aws_caller_identity.current.account_id
+  vpc_id          = module.vpc.vpc_id
+
+  private_subnet_ids = zipmap(
+    [for idx in range(length(module.vpc.private_subnet_ids)) : "private${idx + 1}"], # Dynamically generate keys
+    module.vpc.private_subnet_ids                                                    # Use all subnet IDs
+  )
+
+  db_subnet_ids = zipmap(
+    [for idx in range(length(module.vpc.db_subnet_ids)) : "db${idx + 1}"], # Dynamically generate keys
+    module.vpc.db_subnet_ids                                               # Use all subnet IDs
+  )
+
+  # db_subnet_ids = zipmap(
+  #   ["db1", "db2", "db3"], # Keys for the map
+  #   module.vpc.db_subnet_ids            # List of subnet IDs
+  # )
+
   private_route_table_id = module.vpc.private_route_table_id
   db_route_table_id      = module.vpc.db_route_table_id
   private_cidrs          = module.vpc.private_cidrs
@@ -129,35 +163,45 @@ EOT
 }
 
 
-# Fetch Public Subnets in the Root Module
-data "aws_subnets" "public" {
-  filter {
-    name   = "vpc-id"
-    values = [module.vpc.vpc_id]
-  }
-  tags = {
-    Name = "public*"
-  }
-}
+# # Fetch Public Subnets in the Root Module
+# data "aws_subnets" "public" {
+#   filter {
+#     name   = "vpc-id"
+#     values = [module.vpc.vpc_id]
+#   }
+#   tags = {
+#     Name = "public*"
+#   }
+# }
 
-# Fetch Private Subnets in the Root Module
-data "aws_subnets" "private" {
-  filter {
-    name   = "vpc-id"
-    values = [module.vpc.vpc_id]
-  }
-  tags = {
-    Name = "private*"
-  }
-}
+# # Fetch Private Subnets in the Root Module
+# data "aws_subnets" "private" {
+#   filter {
+#     name   = "vpc-id"
+#     values = [module.vpc.vpc_id]
+#   }
+#   tags = {
+#     Name = "private*"
+#   }
+# }
 
 ## Create SG 2 EC2 and RDS resources
 module "aws_ec2_rds_instances" {
-  depends_on                 = [module.hvp_vault_cluster, module.vpc, module.hvn_peering, module.vault-aws-auth]
+  depends_on = [module.hvp_vault_cluster, module.vpc, module.hvn_peering, module.vault-aws-auth]
   source                     = "git::https://github.com/Knsan1/vault_enable_module.git//modules/aws-ec2-rds"
-  vpc_id                     = module.vpc.vpc_id
-  public_subnet_ids          = data.aws_subnets.public.ids
-  private_subnet_ids         = data.aws_subnets.private.ids
+  vpc_id = module.vpc.vpc_id
+  # public_subnet_ids          = data.aws_subnets.public.ids
+  # private_subnet_ids         = data.aws_subnets.private.ids
+  public_subnet_ids = zipmap(
+    [for idx in range(length(module.vpc.public_subnet_ids)) : "public${idx + 1}"], # Dynamically generate keys
+    module.vpc.public_subnet_ids                                                   # Use all subnet IDs
+  )
+
+  private_subnet_ids = zipmap(
+    [for idx in range(length(module.vpc.private_subnet_ids)) : "private${idx + 1}"], # Dynamically generate keys
+    module.vpc.private_subnet_ids                                                    # Use all subnet IDs
+  )
+
   vault_private_endpoint_url = module.hvp_vault_cluster.vault_private_endpoint
   Role_ID                    = module.enable_approle_auth_backend.role_id
   Secret_ID                  = module.enable_approle_auth_backend.secret_id
@@ -242,7 +286,7 @@ EOT
 
 resource "time_sleep" "wait_before_creating_db_role" {
   depends_on      = [module.aws_ec2_rds_instances]
-  create_duration = "60s"
+  create_duration = "90s"
 }
 
 module "vault_database_secrets" {

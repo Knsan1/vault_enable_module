@@ -34,8 +34,9 @@ resource "aws_instance" "jump" {
   instance_type               = "t2.micro"
   associate_public_ip_address = "true"
   key_name                    = "ssh-key-${random_pet.env.id}"
-  subnet_id                   = var.public_subnet_ids[0]
-  security_groups             = [aws_security_group.allow_ssh_jump.id]
+  # subnet_id                   = var.public_subnet_ids[0]
+  subnet_id       = values(var.public_subnet_ids)[0] # Access the first subnet in the map
+  security_groups = [aws_security_group.allow_ssh_jump.id]
 
   tags = {
     Name = "Jump Server"
@@ -90,10 +91,11 @@ data "template_file" "vault_agent_aws" {
 
 ## Create JUMP server in public subnet
 resource "aws_instance" "app_aws" {
-  ami                  = data.aws_ami.ubuntu.id
-  instance_type        = "t2.micro"
-  key_name             = "ssh-key-${random_pet.env.id}"
-  subnet_id            = var.private_subnet_ids[0]
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t2.micro"
+  key_name      = "ssh-key-${random_pet.env.id}"
+  # subnet_id            = var.private_subnet_ids[0]
+  subnet_id            = values(var.private_subnet_ids)[0] # Access the first subnet in the map
   security_groups      = [aws_security_group.allow_ssh_app.id]
   iam_instance_profile = var.instance_profile_id
   user_data            = data.template_file.vault_agent_aws.rendered
@@ -123,10 +125,11 @@ data "template_file" "vault_agent_approle" {
 
 ## Create JUMP server in public subnet
 resource "aws_instance" "app_approle" {
-  ami             = data.aws_ami.ubuntu.id
-  instance_type   = "t2.micro"
-  key_name        = "ssh-key-${random_pet.env.id}"
-  subnet_id       = var.private_subnet_ids[1]
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t2.micro"
+  key_name      = "ssh-key-${random_pet.env.id}"
+  # subnet_id       = var.private_subnet_ids[1]
+  subnet_id       = values(var.private_subnet_ids)[1] # Access the second subnet in the map
   security_groups = [aws_security_group.allow_ssh_app.id]
   user_data       = data.template_file.vault_agent_approle.rendered
 

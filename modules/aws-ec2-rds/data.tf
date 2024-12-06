@@ -24,18 +24,30 @@ data "aws_ami" "ubuntu" {
 # }
 
 
-# Public Subnets
+# # Public Subnets
+# data "aws_subnet" "public" {
+#   for_each = { for idx, id in var.public_subnet_ids : idx => id }
+#   id       = each.value
+# }
+
+# # Private Subnets
+# data "aws_subnet" "private" {
+#   for_each = { for idx, id in var.private_subnet_ids : idx => id }
+#   id       = each.value
+# }
+
 data "aws_subnet" "public" {
-  for_each = { for idx, id in var.public_subnet_ids : idx => id }
-  id       = each.value
+  for_each = var.public_subnet_ids
+
+  id = each.value
 }
 
-# Private Subnets
 data "aws_subnet" "private" {
-  for_each = { for idx, id in var.private_subnet_ids : idx => id }
-  id       = each.value
-}
+  for_each = var.private_subnet_ids
 
+  id = each.value
+}
+# 
 
 # ###Reading VPC Account ID Info
 # data "aws_vpc" "selected" {
